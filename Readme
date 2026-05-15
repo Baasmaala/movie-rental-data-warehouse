@@ -1,0 +1,101 @@
+# Movie Rental Data Warehouse
+
+## Project Overview
+This project implements a dimensional Data Warehouse for a movie rental business using the Sakila OLTP database.
+
+The system extracts transactional data from the Sakila database, transforms it into analytical structures, and loads it into a star-schema-based warehouse called `movie_dw`.
+
+The project demonstrates:
+- ETL (Extract, Transform, Load) process
+- Star schema design
+- Dimension and fact tables
+- Business intelligence queries
+- Data warehouse implementation using MySQL and Python
+
+---
+
+# Technologies Used
+
+- MySQL Workbench
+- Python
+- Pandas
+- SQLAlchemy
+- PyMySQL
+- VS Code
+
+---
+
+# Data Warehouse Schema
+
+## Dimension Tables
+- DimCustomer
+- DimFilm
+- DimStore
+- DimStaff
+- DimDate
+
+## Fact Tables
+- FactRental
+- FactPayment
+- FactInventory
+
+---
+
+# ETL Process
+
+The ETL pipeline is implemented in `etl.py`.
+
+The process:
+1. Connects to the Sakila OLTP database
+2. Extracts operational data
+3. Transforms and cleans the data
+4. Generates surrogate keys
+5. Loads data into warehouse dimension and fact tables
+
+---
+
+# Business Queries
+
+The warehouse supports analytical business queries such as:
+- Most rented films
+- Highest revenue films
+- Top customers by rentals
+- Customer spending analysis
+- Inventory analysis
+
+Queries are available in:
+```text id="zjiz6w"
+business_queries.sql
+```
+
+---
+
+# Project Structure
+
+```text id="3yppsz"
+MovieRentalDW/
+│
+├── etl.py
+├── create_tables.sql
+├── business_queries.sql
+├── README.md
+│
+└── screenshots/
+```
+
+---
+
+# Screenshots Included
+
+- Successful ETL execution
+- Warehouse tables
+- Dimension table data
+- Fact table data
+- Business query outputs
+
+---
+
+# Author
+
+Student Name: YOUR NAME HERE
+Course: Data Warehousing / Business Intelligence
