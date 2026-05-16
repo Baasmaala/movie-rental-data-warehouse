@@ -11,7 +11,7 @@ host = "localhost"
 
 # Source Database (Sakila)
 sakila_engine = create_engine(
-    f"mysql+pymysql://{username}:{password}@{host}/sakila"
+    f"mysql+pymysql://{username}:{password}@{host}/sakila_prof"
 )
 
 # Data Warehouse Database

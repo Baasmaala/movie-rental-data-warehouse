@@ -1,101 +1,208 @@
 # Movie Rental Data Warehouse
 
+A high-level data warehouse design for a movie rental business, built from the Sakila OLTP database provided in `source/fileDB.sql`. This project reorganizes operational data into a star schema for analytical reporting.
+
+This is a Data Warehousing course assignment covering dimensional modeling and ETL design.
+
 ## Project Overview
-This project implements a dimensional Data Warehouse for a movie rental business using the Sakila OLTP database.
 
-The system extracts transactional data from the Sakila database, transforms it into analytical structures, and loads it into a star-schema-based warehouse called `movie_dw`.
+The source OLTP database (provided as `source/fileDB.sql`) is a MySQL dump of the Sakila movie rental database. It stores daily transactions: customer registrations, film rentals, payments, inventory, staff, and store information. OLTP databases are great for fast inserts and updates but slow for reporting and trend analysis.
 
-The project demonstrates:
-- ETL (Extract, Transform, Load) process
-- Star schema design
-- Dimension and fact tables
-- Business intelligence queries
-- Data warehouse implementation using MySQL and Python
+This project takes the source data and reshapes it into a **star schema** designed for analysis: fact tables in the center store business events, and dimension tables around them store the descriptive context.
 
----
+## Architecture
 
-# Technologies Used
+- **Source database:** Sakila (provided as `source/fileDB.sql`)
+- **Target warehouse:** `movie_dw` (MySQL)
+- **ETL tool:** Python with pandas and SQLAlchemy
+- **Design:** Star schema with 3 fact tables and 5 conformed dimensions
 
-- MySQL Workbench
-- Python
-- Pandas
-- SQLAlchemy
-- PyMySQL
-- VS Code
+### Fact Tables
 
----
+| Fact Table | Grain | Purpose |
+|---|---|---|
+| FactRental | One row per rental | Analyze rental activity and customer behavior |
+| FactPayment | One row per payment | Analyze revenue |
+| FactInventory | One row per inventory item | Analyze stock distribution |
 
-# Data Warehouse Schema
+### Dimension Tables
 
-## Dimension Tables
-- DimCustomer
-- DimFilm
-- DimStore
-- DimStaff
-- DimDate
+DimCustomer, DimFilm, DimStore, DimStaff, DimDate (shared across fact tables).
 
-## Fact Tables
-- FactRental
-- FactPayment
-- FactInventory
+## Repository Structure
 
----
-
-# ETL Process
-
-The ETL pipeline is implemented in `etl.py`.
-
-The process:
-1. Connects to the Sakila OLTP database
-2. Extracts operational data
-3. Transforms and cleans the data
-4. Generates surrogate keys
-5. Loads data into warehouse dimension and fact tables
-
----
-
-# Business Queries
-
-The warehouse supports analytical business queries such as:
-- Most rented films
-- Highest revenue films
-- Top customers by rentals
-- Customer spending analysis
-- Inventory analysis
-
-Queries are available in:
-```text id="zjiz6w"
-business_queries.sql
+```
+movie-rental-data-warehouse/
+├── README.md                            # This file
+├── source/
+│   └── fileDB.sql                       # Provided OLTP source (Sakila dump)
+├── create_tables.sql                    # DDL for all warehouse tables
+├── etl.py                               # Python ETL script
+├── business_queries.sql                 # Analytical SQL queries
+├── docs/
+│   └── finalMovie_Rental_DW_Report.pdf  # Full design report
+├── results/                             # CSV outputs from running the queries
+└── screenshots/                         # Screenshots of MySQL Workbench results
 ```
 
----
+## Business Questions Answered
 
-# Project Structure
+The warehouse is designed to answer the following analytical questions:
 
-```text id="3yppsz"
-MovieRentalDW/
-│
-├── etl.py
-├── create_tables.sql
-├── business_queries.sql
-├── README.md
-│
-└── screenshots/
+1. Which films are rented most frequently?
+2. Which films generate the highest revenue?
+3. Which customers rent the most films?
+4. Which customers generate the highest revenue?
+5. How does rental activity change over time?
+6. How does revenue change by month, quarter, or year?
+7. Which staff members process the most rentals and revenue?
+8. Which film categories are most popular?
+9. Which films are returned late most often?
+10. What is the average rental duration by category?
+11. Which cities and countries have the most customer activity?
+12. How does weekend rental activity compare to weekday activity?
+13. How is inventory distributed between stores?
+
+## How to Run
+
+### Requirements
+
+- MySQL 8.x
+- Python 3.8+
+- Python packages: `pandas`, `sqlalchemy`, `pymysql`
+
+Install Python packages:
+
+```bash
+pip install pandas sqlalchemy pymysql
 ```
 
----
+### Step 1 — Import the source OLTP database
 
-# Screenshots Included
+The source database is provided as `source/fileDB.sql`, a complete MySQL dump
+of the Sakila movie rental database (schema + data).
 
-- Successful ETL execution
-- Warehouse tables
-- Dimension table data
-- Fact table data
-- Business query outputs
+**Option A — Command line (recommended):**
 
----
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS sakila_prof;"
+mysql -u root -p sakila_prof < source/fileDB.sql
+```
 
-# Author
+You will be prompted for your MySQL password each time. The import takes about
+30–60 seconds.
 
-Student Name: YOUR NAME HERE
-Course: Data Warehousing / Business Intelligence
+**Option B — MySQL Workbench:**
+
+1. Open MySQL Workbench
+2. File → Run SQL Script... → select `source/fileDB.sql`
+3. Set **Default Schema Name** to `sakila_prof`
+4. Set **Default Character Set** to `utf8mb4`
+5. Click Run
+
+After import, the `sakila_prof` database will contain 16 tables with the full
+dataset: 599 customers, 1000 films, 4581 inventory items, 16,043 rentals, and
+16,043 payments.
+
+To verify the import:
+
+```sql
+USE sakila_prof;
+SHOW TABLES;
+SELECT COUNT(*) FROM customer;   -- should return 599
+SELECT COUNT(*) FROM film;       -- should return 1000
+SELECT COUNT(*) FROM rental;     -- should return 16043
+```
+
+### Step 2 — Create the warehouse schema
+
+In MySQL Workbench, open `create_tables.sql` and run the entire script. It will:
+
+- Create the `movie_dw` database
+- Create all 5 dimension tables and 3 fact tables with primary keys, foreign keys, and indexes
+
+### Step 3 — Configure database credentials
+
+Open `etl.py` and update the connection settings at the top if needed:
+
+```python
+username = "root"
+password = "root123"
+host = "localhost"
+```
+
+The script reads from `sakila_prof` (the database created in Step 1) and writes
+to `movie_dw` (the warehouse created in Step 2).
+
+### Step 4 — Run the ETL
+
+```bash
+python etl.py
+```
+
+The script will print row counts as it loads each table. Expected output:
+
+```
+Connections successful!
+dimcustomer loaded: 599 rows
+dimfilm loaded: 1000 rows
+dimstore loaded: 2 rows
+dimstaff loaded: 2 rows
+dimdate loaded: 90 rows
+Lookup maps built.
+factrental loaded: 16044 rows
+factpayment loaded: 16020 rows
+factinventory loaded: 4581 rows
+
+ETL process completed successfully!
+```
+
+### Step 5 — Run the business queries
+
+Open `business_queries.sql` in MySQL Workbench and run the queries to see results
+for each business question. Sample outputs are saved as CSV files in the
+`results/` folder for reference.
+
+## ETL Process
+
+The ETL is implemented as a single Python script and runs in this order:
+
+1. **Extract** data from the source OLTP tables in `sakila_prof` (rental, payment, customer, film, store, staff, inventory, address, city, country, category, language, film_category)
+2. **Transform** by joining related tables, combining first/last names, generating surrogate keys, building the date dimension, cleaning text values, and deduplicating
+3. **Load** dimensions first (DimDate → DimCustomer → DimFilm → DimStore → DimStaff), then fact tables (FactRental → FactPayment → FactInventory)
+
+Fact tables use lookup dictionaries to translate OLTP business keys into warehouse surrogate keys.
+
+## Data Quality Checks
+
+The ETL applies these checks during transformation and loading:
+
+- Customer_ID and other business keys must not be null
+- Payment amounts must be greater than zero
+- Foreign keys in fact tables must match valid surrogate keys (mismatched rows are dropped with a warning)
+- Text values like city and country are cleaned (trimmed, title case)
+- Dimension tables are deduplicated
+- Dates use a consistent format (Date_Key as YYYYMMDD)
+
+## Schema Diagram
+
+See `schema.png` for the full star schema. The three fact tables sit in the center, each connecting to the relevant dimensions. DimDate is referenced twice by FactRental (rental date and return date), which is a role-playing dimension pattern.
+
+## Documentation
+
+The complete design report is in `docs/finalMovie_Rental_DW_Report.pdf` and covers:
+
+- Introduction and OLTP vs. data warehouse comparison
+- Business questions and their importance
+- Dimensional model design (business processes, fact tables, dimensions)
+- Schema diagram with explanation
+- ETL design (extract, transform, load)
+- Data quality considerations
+- Conclusion
+
+## Notes
+
+- The schema is a pure star schema; geographic attributes (city, country) are stored inside DimCustomer and DimStore instead of being separate dimensions
+- DimDate is generated during ETL from the distinct rental, return, and payment dates in the source data
+- The warehouse currently does a full reload on each ETL run; incremental loading is not implemented in this version
+- This design uses SCD Type 1 (overwrite on change). For tracking historical changes such as customer relocations or film price updates, the design could be extended to SCD Type 2 by adding Effective_Date, End_Date, and Is_Current columns to the relevant dimensions
