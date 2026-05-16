@@ -1,0 +1,11 @@
+USE movie_dw;
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE factrental;
+TRUNCATE TABLE factpayment;
+TRUNCATE TABLE factinventory;
+TRUNCATE TABLE dimcustomer;
+TRUNCATE TABLE dimfilm;
+TRUNCATE TABLE dimstore;
+TRUNCATE TABLE dimstaff;
+TRUNCATE TABLE dimdate;
+SET FOREIGN_KEY_CHECKS = 1;
