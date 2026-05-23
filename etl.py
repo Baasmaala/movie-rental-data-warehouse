@@ -159,10 +159,7 @@ dim_staff.insert(0, "Staff_Key", range(1, len(dim_staff) + 1))
 dim_staff.to_sql("dimstaff", dw_engine, if_exists="append", index=False)
 print(f"dimstaff loaded: {len(dim_staff)} rows")
 
-# =====================================================
 # LOAD DIMDATE
-# =====================================================
-# Collect ALL distinct dates across the source so every fact date has a key.
 
 date_query = """
 SELECT DATE(rental_date)  AS d FROM rental
@@ -197,10 +194,8 @@ dim_date.insert(
 dim_date.to_sql("dimdate", dw_engine, if_exists="append", index=False)
 print(f"dimdate loaded: {len(dim_date)} rows")
 
-# =====================================================
 # BUILD LOOKUP MAPS (business key -> surrogate key)
-# These let the fact-table ETL translate OLTP IDs into warehouse keys.
-# =====================================================
+
 
 customer_map = dict(zip(dim_customer["Customer_ID"], dim_customer["Customer_Key"]))
 film_map     = dict(zip(dim_film["Film_ID"],         dim_film["Film_Key"]))
@@ -209,11 +204,8 @@ staff_map    = dict(zip(dim_staff["Staff_ID"],       dim_staff["Staff_Key"]))
 
 print("Lookup maps built.")
 
-# =====================================================
 # LOAD FACTRENTAL
-# =====================================================
-# We pull expected rental_duration from film so late return can be
-# computed correctly per film instead of using a flat 7 days.
+
 
 rental_query = """
 SELECT
@@ -267,11 +259,8 @@ if before != len(fact_rental):
 fact_rental.to_sql("factrental", dw_engine, if_exists="append", index=False)
 print(f"factrental loaded: {len(fact_rental)} rows")
 
-# =====================================================
 # LOAD FACTPAYMENT
-# =====================================================
-# Include Film_Key and Store_Key so revenue-by-film / revenue-by-store
-# queries actually work.
+
 
 payment_query = """
 SELECT
@@ -299,7 +288,6 @@ fact_payment = pd.DataFrame({
     "Payment_Amount":   payment_df["amount"],
 })
 
-# Data quality: positive payment amounts only, no unresolved FKs
 fact_payment = fact_payment[fact_payment["Payment_Amount"] > 0]
 fact_payment = fact_payment.dropna(
     subset=["Customer_Key", "Film_Key", "Store_Key", "Staff_Key"]
@@ -308,9 +296,7 @@ fact_payment = fact_payment.dropna(
 fact_payment.to_sql("factpayment", dw_engine, if_exists="append", index=False)
 print(f"factpayment loaded: {len(fact_payment)} rows")
 
-# =====================================================
 # LOAD FACTINVENTORY
-# =====================================================
 
 inventory_query = """
 SELECT
